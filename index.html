@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ArcGIS Online — How It's Accessed</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+  <style>
+    :root {
+      --red:       #D7282F;
+      --navy:      #1F1F55;
+      --grey:      #86828B;
+      --silver:    #C9C4C4;
+      --purple:    #6D3A85;
+      --slate:     #B8CED9;
+      --navy-dark: #141430;
+      --green:     #4caf77;
+      --orange:    #f0a500;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Calibri','Candara','Segoe UI', sans-serif;
+      background: var(--navy-dark);
+      color: #F4F2F2;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 0 0 60px;
+      gap: 28px;
+    }
+
+    /* ── HEADER ─────────────────────────────────────────────────── */
+    .page-header {
+      width: 100%;
+      background: linear-gradient(135deg, var(--navy) 0%, var(--navy-dark) 60%, #0d0d25 100%);
+      border-bottom: 3px solid var(--red);
+      padding: 28px 40px 24px;
+      position: relative;
+      overflow: hidden;
+      margin-bottom: 12px;
+    }
+    .page-header::before {
+      content: '';
+      position: absolute; top: -40px; right: -40px;
+      width: 220px; height: 220px;
+      background: radial-gradient(circle, rgba(215,40,47,.15) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .page-header::after {
+      content: '';
+      position: absolute; bottom: -30px; left: 200px;
+      width: 160px; height: 160px;
+      background: radial-gradient(circle, rgba(109,58,133,.15) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .page-header h1 {
+      font-family: 'Oswald', sans-serif;
+      font-size: 2.6rem;
+      font-weight: 700;
+      color: #fff;
+      line-height: 1;
+    }
+    .page-header h1 span { color: var(--red); }
+    .page-header p {
+      margin-top: 6px;
+      color: var(--slate);
+      font-size: .82rem;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    /* ── PANEL WRAPPER ──────────────────────────────────────────── */
+    .panel {
+      background: rgba(31,31,85,.4);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 10px;
+      padding: 28px 32px;
+      width: 100%;
+      max-width: 1300px;
+    }
+
+    .panel-title {
+      font-family: 'Oswald', sans-serif;
+      font-size: 1rem;
+      font-weight: 600;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--slate);
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+    }
+    .panel-title span { color: var(--red); }
+
+    /* ── ACCESS CARDS ───────────────────────────────────────────── */
+    .access-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+    }
+    @media (max-width: 900px) { .access-grid { grid-template-columns: repeat(2,1fr); } }
+    @media (max-width: 500px) { .access-grid { grid-template-columns: 1fr; } }
+
+    .access-card {
+      background: rgba(0,0,0,.25);
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: 8px;
+      padding: 18px 16px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      position: relative;
+      overflow: hidden;
+      transition: border-color .2s, background .2s;
+    }
+    .access-card:hover {
+      background: rgba(31,31,85,.5);
+      border-color: rgba(255,255,255,.2);
+    }
+
+    .access-card::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0;
+      width: 100%; height: 3px;
+    }
+    .access-card.agol::after     { background: #4a90d9; }
+    .access-card.survey::after   { background: var(--green); }
+    .access-card.fieldmap::after { background: var(--red); }
+    .access-card.pro::after      { background: var(--purple); }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .card-icon {
+      width: 38px; height: 38px;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+    .agol     .card-icon { background: rgba(74,144,217,.25);  border: 1px solid rgba(74,144,217,.5); }
+    .survey   .card-icon { background: rgba(76,175,119,.2);   border: 1px solid rgba(76,175,119,.45); }
+    .fieldmap .card-icon { background: rgba(215,40,47,.2);    border: 1px solid rgba(215,40,47,.45); }
+    .pro      .card-icon { background: rgba(109,58,133,.25);  border: 1px solid rgba(109,58,133,.5); }
+
+    .card-title {
+      font-family: 'Oswald', sans-serif;
+      font-size: .95rem;
+      font-weight: 600;
+      letter-spacing: .04em;
+      color: #fff;
+      line-height: 1.25;
+    }
+
+    .card-desc {
+      font-size: .82rem;
+      color: var(--silver);
+      line-height: 1.6;
+    }
+
+    .card-badges {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 2px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: .7rem;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 4px;
+      text-decoration: none;
+      letter-spacing: .04em;
+      transition: all .18s;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.12);
+      color: var(--slate);
+    }
+    .badge:hover { background: var(--red); border-color: var(--red); color: #fff; }
+
+    .licence-tag {
+      display: inline-block;
+      font-size: .68rem;
+      font-weight: 700;
+      padding: 3px 9px;
+      border-radius: 3px;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      width: fit-content;
+      margin-top: 2px;
+      cursor: help;
+      position: relative;
+    }
+    .agol     .licence-tag { background: rgba(74,144,217,.15);  border: 1px solid rgba(74,144,217,.4);  color: #90c5f0; }
+    .survey   .licence-tag { background: rgba(76,175,119,.15);  border: 1px solid rgba(76,175,119,.4);  color: #7dcca0; }
+    .fieldmap .licence-tag { background: rgba(215,40,47,.15);   border: 1px solid rgba(215,40,47,.4);   color: #f08080; }
+    .pro      .licence-tag { background: rgba(109,58,133,.2);   border: 1px solid rgba(109,58,133,.45); color: #b89ecf; }
+
+    /* ── DIAGRAM ────────────────────────────────────────────────── */
+    #diagram svg {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .panel .mermaid-wrap {
+      background: rgba(255,255,255,.97);
+      border-radius: 8px;
+      padding: 24px;
+    }
+
+    /* ── CLICKABLE CLUSTER HOVER ─────────────────────────────────── */
+    .cluster-clickable {
+      cursor: pointer;
+    }
+    .cluster-clickable rect,
+    .cluster-clickable path {
+      transition: filter .2s, opacity .2s;
+    }
+    .cluster-clickable:hover rect,
+    .cluster-clickable:hover path {
+      filter: brightness(0.88) saturate(1.3);
+    }
+    /* click-pulse ring */
+    .cluster-clickable::after { content: none; }
+
+    /* ── INFO MODAL ──────────────────────────────────────────────── */
+    .info-modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.72);
+      backdrop-filter: blur(4px);
+      z-index: 1000;
+      display: flex; align-items: center; justify-content: center;
+      padding: 20px;
+      opacity: 0; pointer-events: none;
+      transition: opacity .2s;
+    }
+    .info-modal-overlay.open {
+      opacity: 1; pointer-events: all;
+    }
+    .info-modal {
+      background: #1a1a45;
+      border: 1px solid rgba(255,255,255,.12);
+      border-top: 3px solid var(--purple);
+      border-radius: 12px;
+      max-width: 520px; width: 100%;
+      padding: 28px 32px;
+      position: relative;
+      transform: translateY(20px);
+      transition: transform .25s cubic-bezier(.34,1.56,.64,1);
+      max-height: 82vh; overflow-y: auto;
+    }
+    .info-modal-overlay.open .info-modal {
+      transform: translateY(0);
+    }
+    .info-modal-close {
+      position: absolute; top: 14px; right: 16px;
+      background: transparent; border: none;
+      color: var(--grey); cursor: pointer;
+      font-size: 1.3rem; line-height: 1;
+      transition: color .15s;
+    }
+    .info-modal-close:hover { color: var(--red); }
+    .info-modal-cat {
+      display: inline-block;
+      font-size: .7rem; font-weight: 700;
+      letter-spacing: .1em; text-transform: uppercase;
+      padding: 3px 10px; border-radius: 20px;
+      margin-bottom: 10px;
+    }
+    .info-modal-title {
+      font-family: 'Oswald', sans-serif;
+      font-size: 1.5rem; font-weight: 700;
+      color: #fff; margin-bottom: 16px; line-height: 1.2;
+    }
+    .info-modal-body {
+      font-size: .88rem;
+      color: var(--silver);
+      line-height: 1.75;
+    }
+    .info-modal-body ul {
+      margin: 10px 0 0 18px;
+    }
+    .info-modal-body li { margin-bottom: 4px; }
+    .info-modal-body .note-warn {
+      margin-top: 14px;
+      padding: 10px 14px;
+      background: rgba(215,40,47,.1);
+      border-left: 3px solid var(--red);
+      border-radius: 4px;
+      color: #f08080;
+      font-size: .82rem;
+    }
+
+    /* ── LICENCE TAG TOOLTIP ─────────────────────────────────────── */
+    .lic-tooltip {
+      position: fixed;
+      background: #1a1a45;
+      border: 1px solid rgba(255,255,255,.15);
+      color: var(--slate);
+      font-size: .72rem;
+      padding: 5px 10px;
+      border-radius: 5px;
+      pointer-events: none;
+      white-space: nowrap;
+      opacity: 0;
+      transition: opacity .15s;
+      z-index: 2000;
+      box-shadow: 0 4px 12px rgba(0,0,0,.4);
+    }
+    .lic-tooltip.visible { opacity: 1; }
+    .layers-img {
+      display: block;
+      max-width: 100%;
+      width: 100%;
+      height: auto;
+      border-radius: 6px;
+    }
+
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,.15); border-radius: 3px; }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <div class="page-header">
+    <h1>Pembroke GIS <span>System</span></h1>
+    <p>Pembroke Olive Downs — Applications and System Architecture</p>
+  </div>
+
+  <div style="width:100%;max-width:1300px;padding:0 20px;display:flex;flex-direction:column;gap:28px;">
+
+  <!-- ACCESS METHODS -->
+  <div class="panel">
+    <div class="panel-title">What <span>Applications</span> are used to access our GIS?</div>
+    <div class="access-grid">
+
+      <div class="access-card agol">
+        <div class="card-header">
+          <div class="card-icon">🌐</div>
+          <div class="card-title">AGOL<br/>(ArcGIS Online)</div>
+        </div>
+        <p class="card-desc">
+          Accessed via any modern internet browser with a login and internet connection.
+          Allows navigation and simple, temporary customisation of maps — no installation required.
+        </p>
+        <div class="card-badges">
+          <a class="badge" href="https://pembrokeod.maps.arcgis.com/apps/mapviewer/index.html?webmap=cae3263e09d04d5b847bf01876c3aeff" target="_blank" rel="noopener">↗ Open AGOL</a>
+        </div>
+        <span class="licence-tag">Viewer · Mobile Worker · Creator</span>
+      </div>
+
+      <div class="access-card survey">
+        <div class="card-header">
+          <div class="card-icon">📋</div>
+          <div class="card-title">Survey123</div>
+        </div>
+        <p class="card-desc">
+          Mobile app for form-based data collection. Download via the Apple or Android store.
+          Less restrictive on licence type — most logins can access it.
+        </p>
+        <div class="card-badges">
+          <a class="badge" href="https://apps.apple.com/app/arcgis-survey123/id872935362" target="_blank" rel="noopener">🍎 App Store</a>
+          <a class="badge" href="https://play.google.com/store/apps/details?id=com.esri.survey123" target="_blank" rel="noopener">🤖 Google Play</a>
+        </div>
+        <span class="licence-tag">Viewer · Mobile Worker · Creator</span>
+      </div>
+
+      <div class="access-card fieldmap">
+        <div class="card-header">
+          <div class="card-icon">📍</div>
+          <div class="card-title">FieldMaps</div>
+        </div>
+        <p class="card-desc">
+          Mobile app for field data collection and layer editing. Download via the Apple or Android store.
+          Requires Mobile Worker or Creator licence level.
+        </p>
+        <div class="card-badges">
+          <a class="badge" href="https://apps.apple.com/app/arcgis-field-maps/id1515671832" target="_blank" rel="noopener">🍎 App Store</a>
+          <a class="badge" href="https://play.google.com/store/apps/details?id=com.esri.fieldmaps" target="_blank" rel="noopener">🤖 Google Play</a>
+        </div>
+        <span class="licence-tag">Mobile Worker · Creator</span>
+      </div>
+
+      <div class="access-card pro">
+        <div class="card-header">
+          <div class="card-icon">🖥️</div>
+          <div class="card-title">ArcGIS Pro</div>
+        </div>
+        <p class="card-desc">
+          Full desktop GIS application. Configure and publish layers, perform complex spatial analysis,
+          and produce detailed PDF maps. Requires Windows PC installation.
+        </p>
+        <div class="card-badges">
+          <a class="badge" href="https://pro.arcgis.com/en/pro-app/latest/get-started/download-arcgis-pro.htm" target="_blank" rel="noopener">↗ Download</a>
+        </div>
+        <span class="licence-tag">Creator only</span>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- DIAGRAM -->
+  <div class="panel">
+    <div class="panel-title">System <span>Architecture</span></div>
+    <div class="mermaid-wrap">
+      <div id="diagram"></div>
+    </div>
+  </div>
+
+  <!-- LAYER VS MAP -->
+  <div class="panel">
+    <div class="panel-title"><span>Layers</span> vs <span>Maps</span> Explainer</div>
+    <img class="layers-img" src="LayersvsMapExplainer.PNG" alt="Layers vs Maps Explainer">
+  </div>
+
+  <!-- INFO MODAL -->
+  <div class="info-modal-overlay" id="infoModal" onclick="closeModal(event)">
+    <div class="info-modal">
+      <button class="info-modal-close" onclick="closeInfoModal()">✕</button>
+      <div class="info-modal-cat" id="modalCat"></div>
+      <h2 class="info-modal-title" id="modalTitle"></h2>
+      <div class="info-modal-body" id="modalBody"></div>
+    </div>
+  </div>
+
+  </div><!-- end content wrapper -->
+
+  <!-- LICENCE TOOLTIP -->
+  <div class="lic-tooltip" id="licTooltip">Application available to these licence types</div>
+
+<script>
+  const chart = `
+%%{init: { 'flowchart': { 'rankSpacing': 160, 'nodeSpacing': 50 } } }%%
+flowchart TB
+    subgraph Cloud["☁️ ESRI ArcGIS Online Cloud"]
+        DB[("📦 Hosted Database<br/>Maps, Feature Layers, Images, Excel Docs")]
+        WebUI["🌐 Web Interface"]
+    end
+
+    subgraph VM["🖥️ VM: PEM-AVD-1 (Backup Server)"]
+        PyScript["💻 Python Backup Script<br/>(Runs daily)"]
+        GeoDB[("📁 .filegeodatabase<br/>Backup")]
+    end
+
+    subgraph Viewers["👀 Viewers — Read-only Access"]
+        ViewerLic["🎫 4 Licences · $217 / year each"]
+        Onsite["🏗️ On-site (~16 users)"]
+        Brisbane["🏢 Brisbane Office (~22 users)"]
+        External["🌍 External (? users)"]
+        Unassigned["Unassigned"]
+    end
+
+    subgraph MobileWorkers["📱 Mobile Workers — Edit via Mobile"]
+        MWLic["🎫 5 Licences · $688 / year each"]
+        DonCherie["🏗️ Don & Cherie"]
+        SiteMW["🏗️ Site (shared ×5)"]
+        SteveGiacomo["🏗️ Steve & Giacomo"]
+        EnvConsult["🌍 Environmental Consultant (? users)"]
+        ConsultantMW["🌍 Consultant (? users)"]
+    end
+
+    subgraph Creators["🧭 Creators — Full GIS Access"]
+        CreatorLic["🎫 5 Licences · $1,206 / year each"]
+        Cian["🏗️ Cian Morgan"]
+        JWood["🏗️ Jake Wood"]
+        KNicholas["🏗️ Kerryn Nicholas"]
+        JHudson["🏢 Jake Hudson"]
+        Ellen["🏢 Ellen Forbes"]
+    end
+
+    Note1["📝 Images & govt data<br/>not backed up"]
+
+    WebUI --> DB
+    PyScript -- "Backup (Feature Layers)" --> GeoDB
+    PyScript <-- "API Connection" --> DB
+    Note1 -.- DB
+    Viewers -- "🌐 Browser / Survey123" --> WebUI
+    MobileWorkers -- "📱 Field Maps / Survey123" --> WebUI
+    Creators -- "🖥️ Desktop / Field Maps / Browser / Survey123" --> WebUI
+
+    style Cloud fill:#dbeeff,stroke:#4a90d9,stroke-width:2px,stroke-dasharray:8 4
+    style VM fill:#fff8e1,stroke:#f0a500,stroke-width:2px
+    style Viewers fill:#e8f5e9,stroke:#43a047,stroke-width:2px
+    style MobileWorkers fill:#fce4ec,stroke:#e91e63,stroke-width:2px
+    style Creators fill:#ede7f6,stroke:#673ab7,stroke-width:2px
+    style Note1 fill:#ffffff,stroke:#b0bec5,stroke-dasharray:4 4,color:#37474f
+    style ViewerLic fill:#c8e6c9,stroke:#43a047,stroke-width:1.5px,color:#1b5e20,font-weight:bold
+    style MWLic fill:#fadadd,stroke:#e91e63,stroke-width:1.5px,color:#880e4f,font-weight:bold
+    style CreatorLic fill:#e1d5f0,stroke:#673ab7,stroke-width:1.5px,color:#311b92,font-weight:bold
+  `;
+
+  mermaid.initialize({
+    startOnLoad: false,
+    theme: 'default',
+    flowchart: { padding: 24, subGraphTitleMargin: { top: 28, bottom: 18 }, htmlLabels: true }
+  });
+
+  mermaid.render('mermaid-svg', chart).then(({ svg }) => {
+    document.getElementById('diagram').innerHTML = svg;
+    const svgEl = document.getElementById('diagram').querySelector('svg');
+    if (svgEl) { addHalos(svgEl); makeCloud(svgEl); setupClusterClicks(svgEl); }
+  }).catch(err => {
+    document.getElementById('diagram').innerHTML = '<p style="color:#f08080;padding:20px;">⚠ Diagram error: ' + err.message + '</p>';
+    console.error('Mermaid error:', err);
+  });
+
+  function addHalos(svg) {
+    svg.querySelectorAll('.cluster-label text').forEach(t => {
+      t.setAttribute('stroke', '#ffffff');
+      t.setAttribute('stroke-width', '5');
+      t.setAttribute('paint-order', 'stroke');
+      t.setAttribute('stroke-linejoin', 'round');
+      t.style.fontWeight = '700';
+    });
+    svg.querySelectorAll('.cluster-label').forEach(label => {
+      label.querySelectorAll('span, p, div').forEach(el => {
+        el.style.textShadow = '-2px -2px 0 #fff, 2px -2px 0 #fff, -2px 2px 0 #fff, 2px 2px 0 #fff, 0 -3px 0 #fff, 0 3px 0 #fff, -3px 0 0 #fff, 3px 0 0 #fff';
+        el.style.fontWeight = '700';
+      });
+    });
+  }
+
+  function makeCloud(svg) {
+    let target = null;
+    svg.querySelectorAll('g.cluster').forEach(c => {
+      if ((c.querySelector('.cluster-label')?.textContent || '').includes('ArcGIS')) target = c;
+    });
+    if (!target) return;
+    const rect = target.querySelector('rect');
+    if (!rect) return;
+    const x = parseFloat(rect.getAttribute('x')) || 0;
+    const y = parseFloat(rect.getAttribute('y')) || 0;
+    const w = parseFloat(rect.getAttribute('width'))  || 200;
+    const h = parseFloat(rect.getAttribute('height')) || 100;
+    const fill = rect.getAttribute('fill')   || '#dbeeff';
+    const strk = rect.getAttribute('stroke') || '#4a90d9';
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', buildCloudPath(x, y, w, h));
+    path.setAttribute('fill', fill);
+    path.setAttribute('stroke', strk);
+    path.setAttribute('stroke-width', '2');
+    path.setAttribute('stroke-dasharray', '8 4');
+    path.setAttribute('stroke-linecap', 'round');
+    path.setAttribute('stroke-linejoin', 'round');
+    rect.replaceWith(path);
+  }
+
+  // ── SUBGRAPH INFO DATA ────────────────────────────────────────────
+  const clusterInfo = {
+    'Viewers': {
+      cat: '👀 Viewer Licence',
+      catColor: '#43a047',
+      title: 'Viewers — Read-only Access',
+      html: `
+        <p>The Viewer licence allows access to the GIS system through a desktop browser. Users can:</p>
+        <ul>
+          <li>Navigate and explore maps</li>
+          <li>Apply filters and change symbology <strong>temporarily</strong></li>
+          <li>Print mud maps as a PDF</li>
+          <li>Access Survey123 forms</li>
+        </ul>
+        <div class="note-warn">⚠ This login <strong>cannot</strong> be used for FieldMaps on mobile devices.</div>
+      `
+    },
+    'MobileWorkers': {
+      cat: '📱 Mobile Worker Licence',
+      catColor: '#e91e63',
+      title: 'Mobile Workers — Edit via Mobile',
+      html: `
+        <p>The Mobile Worker licence is designed for field-based data collection and editing. Users can:</p>
+        <ul>
+          <li>Access and edit data in layers enabled for editing via <strong>FieldMaps</strong></li>
+          <li>Submit forms and surveys via <strong>Survey123</strong></li>
+          <li>Use the app on phone or tablet (Apple or Android)</li>
+        </ul>
+        <div class="note-warn">⚠ This login <strong>cannot</strong> be used in a desktop browser (AGOL web interface).</div>
+      `
+    },
+    'Creators': {
+      cat: '🧭 Creator Licence',
+      catColor: '#673ab7',
+      title: 'Creators — Full GIS Access',
+      html: `
+        <p>The Creator licence provides full access to the GIS platform. Creators can:</p>
+        <ul>
+          <li>Create and configure new feature layers</li>
+          <li>Build and publish Survey123 surveys</li>
+          <li>Design and share new web maps</li>
+          <li>Export polished PDF maps</li>
+          <li>Perform advanced spatial analysis in <strong>ArcGIS Pro</strong> (desktop)</li>
+          <li>Access via browser, FieldMaps, Survey123, and ArcGIS Pro</li>
+        </ul>
+      `
+    }
+  };
+
+  // ── MAKE CLUSTERS CLICKABLE AFTER RENDER ─────────────────────────
+  function setupClusterClicks(svg) {
+    svg.querySelectorAll('g.cluster').forEach(c => {
+      const label = c.querySelector('.cluster-label')?.textContent || '';
+      let key = null;
+      if (label.includes('Viewers') || label.includes('Read-only')) key = 'Viewers';
+      else if (label.includes('Mobile')) key = 'MobileWorkers';
+      else if (label.includes('Creators') || label.includes('Creator')) key = 'Creators';
+      if (!key) return;
+
+      c.classList.add('cluster-clickable');
+      c.setAttribute('tabindex', '0');
+      c.setAttribute('role', 'button');
+      c.setAttribute('aria-label', `Show info for ${key}`);
+      c.style.cursor = 'pointer';
+
+      // hover brightening on the background shape
+      const bg = c.querySelector('rect, path');
+      if (bg) {
+        c.addEventListener('mouseenter', () => { bg.style.filter = 'brightness(0.85) saturate(1.4)'; });
+        c.addEventListener('mouseleave', () => { bg.style.filter = ''; });
+      }
+
+      c.addEventListener('click', () => openInfoModal(key));
+      c.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') openInfoModal(key); });
+    });
+  }
+
+  function openInfoModal(key) {
+    const info = clusterInfo[key];
+    if (!info) return;
+    const cat = document.getElementById('modalCat');
+    cat.textContent = info.cat;
+    cat.style.background = info.catColor + '33';
+    cat.style.color = info.catColor;
+    cat.style.border = `1px solid ${info.catColor}66`;
+    document.getElementById('modalTitle').textContent = info.title;
+    document.getElementById('modalBody').innerHTML = info.html;
+    document.getElementById('infoModal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeInfoModal() {
+    document.getElementById('infoModal').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  function closeModal(e) {
+    if (e.target === document.getElementById('infoModal')) closeInfoModal();
+  }
+
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeInfoModal(); });
+
+  // ── LICENCE TAG TOOLTIP ───────────────────────────────────────────
+  document.addEventListener('DOMContentLoaded', () => {
+    const tooltip = document.getElementById('licTooltip');
+    document.querySelectorAll('.licence-tag').forEach(tag => {
+      tag.addEventListener('mouseenter', e => {
+        tooltip.classList.add('visible');
+        positionTooltip(e);
+      });
+      tag.addEventListener('mousemove', positionTooltip);
+      tag.addEventListener('mouseleave', () => tooltip.classList.remove('visible'));
+    });
+  });
+
+  function positionTooltip(e) {
+    const tooltip = document.getElementById('licTooltip');
+    tooltip.style.left = (e.clientX + 12) + 'px';
+    tooltip.style.top  = (e.clientY - 38) + 'px';
+  }
+
+  function buildCloudPath(x, y, w, h) {
+    const BUMPS = 6, bH = Math.min(h * 0.27, 40), base = y + bH, floor = y + h;
+    const cr = Math.min(14, h * 0.08), seg = w / BUMPS;
+    let d = `M ${x+cr} ${floor} H ${x+w-cr} Q ${x+w} ${floor} ${x+w} ${floor-cr} L ${x+w} ${base} `;
+    for (let i = BUMPS-1; i >= 0; i--) {
+      const rx = x+(i+1)*seg, lx = x+i*seg, mx = (lx+rx)/2;
+      d += `C ${rx-seg*.08} ${base}, ${rx-seg*.30} ${y-bH*.65}, ${mx} ${y-bH*.55} `;
+      d += `C ${lx+seg*.30} ${y-bH*.65}, ${lx+seg*.08} ${base}, ${lx} ${base} `;
+    }
+    d += `L ${x} ${floor-cr} Q ${x} ${floor} ${x+cr} ${floor} Z`;
+    return d;
+  }
+</script>
+</body>
+</html>
