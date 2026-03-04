@@ -351,9 +351,9 @@ flowchart TB
     PyScript -- "Backup (Feature Layers)" --> GeoDB
     PyScript <-- "API Connection" --> DB
     Note1 -.- DB
-    Viewers -- "🌐 Browser / Survey123" --> WebUI
-    MobileWorkers -- "📱 Field Maps / Survey123" --> WebUI
-    Creators -- "🖥️ Desktop / Field Maps<br/>Browser / Survey123" --> WebUI
+    Viewers -- "🌐 Browser (R) / Survey123" --> WebUI
+    MobileWorkers -- "📱 Field Maps<br/>🌐 Browser (R) / Survey123" --> WebUI
+    Creators -- "🖥️ Desktop / Field Maps<br/>🌐 Browser (E) / Survey123" --> WebUI
 
     style Cloud fill:#dbeeff,stroke:#4a90d9,stroke-width:2px,stroke-dasharray:8 4
     style VM fill:#fff8e1,stroke:#f0a500,stroke-width:2px
@@ -541,7 +541,7 @@ flowchart TB
     },
     'MobileWorkers': {
       cat: '📱 Mobile Worker Licence', catColor: '#e91e63', title: 'Mobile Workers — Edit via Mobile',
-      html: `<p>The Mobile Worker licence is designed for field-based data collection and editing. Users can:</p><ul><li>Access and edit data in layers enabled for editing via <strong>FieldMaps</strong></li><li>Submit forms and surveys via <strong>Survey123</strong></li><li>Use the app on phone or tablet (Apple or Android)</li></ul><div class="note-warn">⚠ This login <strong>cannot</strong> be used in a desktop browser (AGOL web interface).</div>`
+      html: `<p>The Mobile Worker licence is designed for field-based data collection and editing. Users can:</p><ul><li>Access and edit data in layers enabled for editing via <strong>FieldMaps</strong></li><li>Submit forms and surveys via <strong>Survey123</strong></li><li>Use the app on phone or tablet (Apple or Android)</li></ul><div class="note-warn">⚠ This login <strong>cannot</strong> be used to edit layers or maps in a desktop browser (AGOL web interface).<br/> It can be used to view and create mud maps on the desktop browser.</div>`
     },
     'Creators': {
       cat: '🧭 Creator Licence', catColor: '#673ab7', title: 'Creators — Full GIS Access',
@@ -653,6 +653,7 @@ flowchart TB
 </body>
 
 </html>
+
 
 
 
