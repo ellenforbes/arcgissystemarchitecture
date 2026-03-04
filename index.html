@@ -124,31 +124,9 @@
     .fieldmap .licence-tag { background: rgba(215,40,47,.15);   border: 1px solid rgba(215,40,47,.4);   color: #f08080; }
     .pro      .licence-tag { background: rgba(109,58,133,.2);   border: 1px solid rgba(109,58,133,.45); color: #b89ecf; }
 
-    /* Scrollable wrapper — prevents SVG from being squeezed narrower than its
-       natural render width. When SVG is forced to width:100% and scales down,
-       HTML inside foreignObject elements does NOT scale with it and gets clipped.
-       Allowing horizontal scroll means the SVG always renders at full size. */
-    .panel .mermaid-wrap {
-      background: rgba(255,255,255,.97);
-      border-radius: 8px;
-      padding: 24px;
-      overflow-x: auto;
-      overflow-y: visible;
-    }
-    #diagram svg {
-      display: block;
-      height: auto;
-      /* Let SVG render at its natural width — never squeeze it */
-      min-width: min-content;
-    }
-    /* Belt-and-suspenders: force label divs to wrap regardless of foreignObject width */
-    #diagram foreignObject > div,
-    #diagram .label div,
-    #diagram .nodeLabel {
-      white-space: normal !important;
-      word-break: break-word !important;
-      overflow-wrap: break-word !important;
-    }
+    #diagram { min-width: 1100px; }
+    .panel .mermaid-wrap { background: rgba(255,255,255,.97); border-radius: 8px; padding: 24px; overflow-x: auto; overflow-y: visible; }
+    #diagram svg { display: block; height: auto; }
 
     .cluster-clickable { cursor: pointer; }
     .cluster-clickable rect, .cluster-clickable path { transition: filter .2s; }
@@ -657,4 +635,3 @@ flowchart TB
 </body>
 
 </html>
-
