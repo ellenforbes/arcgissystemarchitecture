@@ -169,7 +169,7 @@
       background: rgba(240,165,0,.1); border-left-color: var(--orange); color: #ffd166;
     }
     .info-modal-body .note-warn.blue {
-      background: rgba(0, 123, 255, 0.1); border-left-color: var(--blue); color: #66b3ff;
+      background: rgba(74,144,217,.1); border-left-color: #4a90d9; color: #90c5f0;
     }
 
     .lic-tooltip {
@@ -295,6 +295,11 @@
     </div>
   </div>
 
+  <div class="panel">
+    <div class="panel-title"><span>Layers</span> vs <span>Maps</span> Explainer</div>
+    <img class="layers-img" src="LayersvsMapExplainer.png" alt="Layers vs Maps Explainer">
+  </div>
+
   <div class="info-modal-overlay" id="infoModal" onclick="closeModal(event)">
     <div class="info-modal" id="infoModalInner">
       <button class="info-modal-close" onclick="closeInfoModal()">✕</button>
@@ -313,7 +318,7 @@
 %%{init: { 'flowchart': { 'rankSpacing': 160, 'nodeSpacing': 50 } } }%%
 flowchart TB
     subgraph Cloud["☁️ ESRI ArcGIS Online Cloud"]
-        DB[("📦 Hosted Database<br/>Maps, Feature Layers,<br/>Images, Excel Docs")]
+        DB[("📦 Hosted Database<br/>Maps, Feature Layers, Images, Excel Docs")]
         WebUI["🌐 Web Interface"]
     end
 
@@ -322,20 +327,20 @@ flowchart TB
         GeoDB[("📁 .filegeodatabase<br/>Backup")]
     end
 
-    subgraph Viewers["👀 Viewers — Read-only<br/>or Survey123 Access"]
+    subgraph Viewers["👀 Viewers — Read-only Access"]
         ViewerLic["🎫 4 Licences · $217 / year each"]
         Onsite["🏗️ On-site (~16 users)"]
-        Brisbane["🏢 Brisbane Office<br/>(~22 users)"]
+        Brisbane["🏢 Brisbane Office (~22 users)"]
         External["🌍 External (? users)"]
         Unassigned["Unassigned"]
     end
 
-    subgraph MobileWorkers["📱 Mobile Workers<br/>Edit via Mobile"]
+    subgraph MobileWorkers["📱 Mobile Workers — Edit via Mobile"]
         MWLic["🎫 5 Licences · $688 / year each"]
         DonCherie["🏗️ Don & Cherie"]
         SiteMW["🏗️ Site (shared ×5)"]
         SteveGiacomo["🏗️ Steve & Giacomo"]
-        EnvConsult["🌍 Environmental<br/>Consultant (? users)"]
+        EnvConsult["🌍 Environmental Consultant (? users)"]
         ConsultantMW["🌍 Consultant (? users)"]
     end
 
@@ -344,19 +349,26 @@ flowchart TB
         Cian["🏗️ Cian Morgan"]
         JWood["🏗️ Jake Wood"]
         KNicholas["🏗️ Kerryn Nicholas"]
-        JHudson["🏢 Jake Hudson (A)"]
-        Ellen["🏢 Ellen Forbes (A)"]
+        JHudson["🏢 Jake Hudson"]
+        Ellen["🏢 Ellen Forbes"]
     end
 
     Note1["📝 Images & govt data<br/>not backed up"]
 
+    subgraph SharePoint["📂 SharePoint: Pembroke GIS Files"]
+        SP_DXF["📐 DXFs"]
+        SP_SHP["🗺️ Shapefiles"]
+    end
+
     WebUI --> DB
     PyScript -- "Backup (Feature Layers)" --> GeoDB
     PyScript <-- "API Connection" --> DB
+    PyScript -- "Python script" --> SP_DXF
+    PyScript -- "Python script" --> SP_SHP
     Note1 -.- DB
-    Viewers -- "🌐 Browser (R) / Survey123" --> WebUI
-    MobileWorkers -- "📱 Field Maps<br/>🌐 Browser (R) / Survey123" --> WebUI
-    Creators -- "🖥️ Desktop / Field Maps<br/>🌐 Browser (W) / Survey123" --> WebUI
+    Viewers -- "🌐 Browser / Survey123" --> WebUI
+    MobileWorkers -- "📱 Field Maps / Survey123" --> WebUI
+    Creators -- "🖥️ Desktop / Field Maps / Browser / Survey123" --> WebUI
 
     style Cloud fill:#dbeeff,stroke:#4a90d9,stroke-width:2px,stroke-dasharray:8 4
     style VM fill:#fff8e1,stroke:#f0a500,stroke-width:2px
@@ -364,6 +376,7 @@ flowchart TB
     style MobileWorkers fill:#fce4ec,stroke:#e91e63,stroke-width:2px
     style Creators fill:#ede7f6,stroke:#673ab7,stroke-width:2px
     style Note1 fill:#ffffff,stroke:#b0bec5,stroke-dasharray:4 4,color:#37474f
+    style SharePoint fill:#fff3e0,stroke:#e65100,stroke-width:2px
     style ViewerLic fill:#c8e6c9,stroke:#43a047,stroke-width:1.5px,color:#1b5e20,font-weight:bold
     style MWLic fill:#fadadd,stroke:#e91e63,stroke-width:1.5px,color:#880e4f,font-weight:bold
     style CreatorLic fill:#e1d5f0,stroke:#673ab7,stroke-width:1.5px,color:#311b92,font-weight:bold
@@ -375,31 +388,12 @@ flowchart TB
     flowchart: { padding: 24, subGraphTitleMargin: { top: 28, bottom: 18 }, htmlLabels: true }
   });
 
-  // Force the container to a known wide size BEFORE mermaid.render().
-  // Mermaid measures the container to calculate foreignObject widths for subgraph
-  // titles. On GitHub Pages Chrome renders the page slightly narrower than local,
-  // so foreignObjects get smaller widths and Chrome clips the text strictly.
-  // By pinning to 1400px before render we guarantee consistent wide foreignObjects.
-  const diagramEl = document.getElementById('diagram');
-  diagramEl.style.minWidth = '1400px';
-
   mermaid.render('mermaid-svg', chart).then(({ svg }) => {
-    diagramEl.innerHTML = svg;
-    // Restore normal sizing — the rendered SVG has its own viewBox now
-    diagramEl.style.minWidth = '';
-    const svgEl = diagramEl.querySelector('svg');
-    if (svgEl) {
-      // Also patch any foreignObject widths that are still too narrow
-      svgEl.querySelectorAll('g.cluster foreignObject').forEach(fo => {
-        const w = parseFloat(fo.getAttribute('width') || '0');
-        if (w > 0 && w < 300) fo.setAttribute('width', '300');
-        fo.style.overflow = 'visible';
-      });
-      addHalos(svgEl); makeCloud(svgEl); setupClusterClicks(svgEl); addRiskBadges(svgEl);
-    }
+    document.getElementById('diagram').innerHTML = svg;
+    const svgEl = document.getElementById('diagram').querySelector('svg');
+    if (svgEl) { addHalos(svgEl); makeCloud(svgEl); setupClusterClicks(svgEl); addRiskBadges(svgEl); }
   }).catch(err => {
-    diagramEl.style.minWidth = '';
-    diagramEl.innerHTML = '<p style="color:#f08080;padding:20px;">⚠ Diagram error: ' + err.message + '</p>';
+    document.getElementById('diagram').innerHTML = '<p style="color:#f08080;padding:20px;">⚠ Diagram error: ' + err.message + '</p>';
   });
 
   function addHalos(svg) {
@@ -475,21 +469,21 @@ flowchart TB
       type: 'warn',
       title: '! Inefficiency — Unassigned Licence', cat: '🟡 Inefficiency', catColor: '#f0a500',
       html: `<div class="note-warn yellow">This licence is currently unassigned and represents wasted expenditure.<br/><br/>At $217/year, this seat should either be allocated to a user with a genuine need or removed from the subscription to reduce costs.</div>`
-    }
+    },
     'PyScript': {
       type: 'warn',
-      title: '! Previous Failures', cat: '🟡 Inefficiency', catColor: '#f0a500',
-      html: `<div class="note-warn yellow">This back up system is probably the best we can do with the infrastructure we have, it runs daily 90% of the time. Would look to eventually improve but low priority issue.</div>`
-    }
+      title: '! Backup Reliability', cat: '🟡 Note', catColor: '#f0a500',
+      html: `<div class="note-warn yellow">This backup system is probably the best we can do with the infrastructure we have — it runs daily ~90% of the time. Would look to eventually improve but is a low priority issue.</div>`
+    },
     'JHudson': {
-      type: 'warn',
-      title: 'Administrator', cat: '🔵 Information', catColor: '#f0a500',
-      html: `<div class="note-warn blue">Administrator access, can add and delete other users, full access to delete and edit all layers on the system (other creator users can only completely edit and delete their own layers).</div>`
-    }
+      type: 'info',
+      title: 'Administrator — Jake Hudson', cat: '🔵 Information', catColor: '#4a90d9',
+      html: `<div class="note-warn blue">Administrator access: can add and delete other users, and has full access to delete and edit all layers on the system. Other Creator users can only fully edit and delete their own layers.</div>`
+    },
     'Ellen': {
-      type: 'warn',
-      title: '! Previous Failures', cat: '🔵 Information', catColor: '#f0a500',
-      html: `<div class="note-warn blue">Administrator access, can add and delete other users, full access to delete and edit all layers on the system (other creator users can only completely edit and delete their own layers).</div>`
+      type: 'info',
+      title: 'Administrator — Ellen Forbes', cat: '🔵 Information', catColor: '#4a90d9',
+      html: `<div class="note-warn blue">Administrator access: can add and delete other users, and has full access to delete and edit all layers on the system. Other Creator users can only fully edit and delete their own layers.</div>`
     }
   };
 
@@ -501,9 +495,9 @@ flowchart TB
       { match: 'Environmental Consultant',  key: 'EnvConsult'  },
       { match: 'Consultant',               key: 'ConsultantMW' },
       { match: 'Unassigned',               key: 'Unassigned'  },
-      { match: 'PyScript',               key: 'PyScript'  },
-      { match: 'JHudson',               key: 'JHudson'  },
-      { match: 'Ellen',               key: 'Ellen'  }
+      { match: 'Python Backup Script',      key: 'PyScript'    },
+      { match: 'Jake Hudson',              key: 'JHudson'     },
+      { match: 'Ellen Forbes',             key: 'Ellen'       }
     ];
 
     const svgNS  = 'http://www.w3.org/2000/svg';
@@ -528,11 +522,13 @@ flowchart TB
 
         const info   = riskInfo[hit.key];
         const isWarn = info?.type === 'warn';
-        const colour = isWarn ? '#f0a500' : '#D7282F';
+        const isInfo = info?.type === 'info';
+        const colour = isWarn ? '#f0a500' : isInfo ? '#4a90d9' : '#D7282F';
 
         const g = document.createElementNS(svgNS, 'g');
         g.classList.add('risk-badge');
         if (isWarn) g.classList.add('warn');
+        if (isInfo) g.classList.add('info');
         g.style.cursor = 'pointer';
 
         const circle = document.createElementNS(svgNS, 'circle');
@@ -562,11 +558,11 @@ flowchart TB
     },
     'MobileWorkers': {
       cat: '📱 Mobile Worker Licence', catColor: '#e91e63', title: 'Mobile Workers — Edit via Mobile',
-      html: `<p>The Mobile Worker licence is designed for field-based data collection and editing. Users can:</p><ul><li>Access and edit data in layers enabled for editing via <strong>FieldMaps</strong></li><li>Submit forms and surveys via <strong>Survey123</strong></li><li>Use the app on phone or tablet (Apple or Android)</li></ul><div class="note-warn">⚠ This login <strong>cannot</strong> be used to edit layers or maps in a desktop browser (AGOL web interface).<br/> It can be used to view and create mud maps on the desktop browser.</div>`
+      html: `<p>The Mobile Worker licence is designed for field-based data collection and editing. Users can:</p><ul><li>Access and edit data in layers enabled for editing via <strong>FieldMaps</strong></li><li>Submit forms and surveys via <strong>Survey123</strong></li><li>Use the app on phone or tablet (Apple or Android)</li></ul><div class="note-warn">⚠ This login <strong>cannot</strong> be used in a desktop browser (AGOL web interface).</div>`
     },
     'Creators': {
       cat: '🧭 Creator Licence', catColor: '#673ab7', title: 'Creators — Full GIS Access',
-      html: `<p>The Creator licence provides full access to the GIS platform. Creators can:</p><ul><li>Create and configure new feature layers on AGOL</li><li>Build and publish Survey123 surveys</li><li>Design and share new web maps on AGOL</li><li>Export polished PDF maps</li><li>Perform advanced spatial analysis in <strong>ArcGIS Pro</strong> (desktop)</li><li>Access via browser, FieldMaps, Survey123, and ArcGIS Pro</li></ul>`
+      html: `<p>The Creator licence provides full access to the GIS platform. Creators can:</p><ul><li>Create and configure new feature layers</li><li>Build and publish Survey123 surveys</li><li>Design and share new web maps</li><li>Export polished PDF maps</li><li>Perform advanced spatial analysis in <strong>ArcGIS Pro</strong> (desktop)</li><li>Access via browser, FieldMaps, Survey123, and ArcGIS Pro</li></ul>`
     }
   };
 
@@ -611,6 +607,8 @@ flowchart TB
     cat.textContent = info.cat;
     if (info.type === 'warn') {
       cat.style.background = 'rgba(240,165,0,.2)'; cat.style.color = '#ffd166'; cat.style.border = '1px solid rgba(240,165,0,.5)';
+    } else if (info.type === 'info') {
+      cat.style.background = 'rgba(74,144,217,.2)'; cat.style.color = '#90c5f0'; cat.style.border = '1px solid rgba(74,144,217,.5)';
     } else {
       cat.style.background = 'rgba(215,40,47,.2)'; cat.style.color = '#f08080'; cat.style.border = '1px solid rgba(215,40,47,.5)';
     }
@@ -674,8 +672,3 @@ flowchart TB
 </body>
 
 </html>
-
-
-
-
-
