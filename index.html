@@ -372,20 +372,31 @@ flowchart TB
     flowchart: { padding: 24, subGraphTitleMargin: { top: 28, bottom: 18 }, htmlLabels: true }
   });
 
+  // Force the container to a known wide size BEFORE mermaid.render().
+  // Mermaid measures the container to calculate foreignObject widths for subgraph
+  // titles. On GitHub Pages Chrome renders the page slightly narrower than local,
+  // so foreignObjects get smaller widths and Chrome clips the text strictly.
+  // By pinning to 1400px before render we guarantee consistent wide foreignObjects.
+  const diagramEl = document.getElementById('diagram');
+  diagramEl.style.minWidth = '1400px';
+
   mermaid.render('mermaid-svg', chart).then(({ svg }) => {
-    document.getElementById('diagram').innerHTML = svg;
-    const svgEl = document.getElementById('diagram').querySelector('svg');
+    diagramEl.innerHTML = svg;
+    // Restore normal sizing — the rendered SVG has its own viewBox now
+    diagramEl.style.minWidth = '';
+    const svgEl = diagramEl.querySelector('svg');
     if (svgEl) {
-        // Chrome clips SVG text elements strictly to their clipPath rect — unlike Edge.
-        // Removing clip-path from cluster label groups lets the title text render fully.
-        svgEl.querySelectorAll('g.cluster .cluster-label').forEach(el => {
-          el.removeAttribute('clip-path');
-          el.querySelectorAll('[clip-path]').forEach(child => child.removeAttribute('clip-path'));
-        });
-        addHalos(svgEl); makeCloud(svgEl); setupClusterClicks(svgEl); addRiskBadges(svgEl);
-      }
+      // Also patch any foreignObject widths that are still too narrow
+      svgEl.querySelectorAll('g.cluster foreignObject').forEach(fo => {
+        const w = parseFloat(fo.getAttribute('width') || '0');
+        if (w > 0 && w < 300) fo.setAttribute('width', '300');
+        fo.style.overflow = 'visible';
+      });
+      addHalos(svgEl); makeCloud(svgEl); setupClusterClicks(svgEl); addRiskBadges(svgEl);
+    }
   }).catch(err => {
-    document.getElementById('diagram').innerHTML = '<p style="color:#f08080;padding:20px;">⚠ Diagram error: ' + err.message + '</p>';
+    diagramEl.style.minWidth = '';
+    diagramEl.innerHTML = '<p style="color:#f08080;padding:20px;">⚠ Diagram error: ' + err.message + '</p>';
   });
 
   function addHalos(svg) {
