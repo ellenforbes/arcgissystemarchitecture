@@ -124,8 +124,31 @@
     .fieldmap .licence-tag { background: rgba(215,40,47,.15);   border: 1px solid rgba(215,40,47,.4);   color: #f08080; }
     .pro      .licence-tag { background: rgba(109,58,133,.2);   border: 1px solid rgba(109,58,133,.45); color: #b89ecf; }
 
-    #diagram svg { width: 100%; height: auto; display: block; overflow: visible; }
-    .panel .mermaid-wrap { background: rgba(255,255,255,.97); border-radius: 8px; padding: 24px; overflow: visible; }
+    /* Scrollable wrapper — prevents SVG from being squeezed narrower than its
+       natural render width. When SVG is forced to width:100% and scales down,
+       HTML inside foreignObject elements does NOT scale with it and gets clipped.
+       Allowing horizontal scroll means the SVG always renders at full size. */
+    .panel .mermaid-wrap {
+      background: rgba(255,255,255,.97);
+      border-radius: 8px;
+      padding: 24px;
+      overflow-x: auto;
+      overflow-y: visible;
+    }
+    #diagram svg {
+      display: block;
+      height: auto;
+      /* Let SVG render at its natural width — never squeeze it */
+      min-width: min-content;
+    }
+    /* Belt-and-suspenders: force label divs to wrap regardless of foreignObject width */
+    #diagram foreignObject > div,
+    #diagram .label div,
+    #diagram .nodeLabel {
+      white-space: normal !important;
+      word-break: break-word !important;
+      overflow-wrap: break-word !important;
+    }
 
     .cluster-clickable { cursor: pointer; }
     .cluster-clickable rect, .cluster-clickable path { transition: filter .2s; }
@@ -374,21 +397,15 @@ flowchart TB
   mermaid.initialize({
     startOnLoad: false,
     theme: 'default',
-    useMaxWidth: false,
-    flowchart: { padding: 24, subGraphTitleMargin: { top: 28, bottom: 18 }, htmlLabels: true, useMaxWidth: false }
+    flowchart: { padding: 24, subGraphTitleMargin: { top: 28, bottom: 18 }, htmlLabels: true }
   });
 
-  // Defer render until fonts are loaded — fixes truncated labels on GitHub Pages
-  // where Google Fonts load asynchronously and Mermaid would otherwise size
-  // nodes using the fallback font, causing text to overflow and be clipped.
-  document.fonts.ready.then(() => {
-    mermaid.render('mermaid-svg', chart).then(({ svg }) => {
-      document.getElementById('diagram').innerHTML = svg;
-      const svgEl = document.getElementById('diagram').querySelector('svg');
-      if (svgEl) { addHalos(svgEl); makeCloud(svgEl); setupClusterClicks(svgEl); addRiskBadges(svgEl); }
-    }).catch(err => {
-      document.getElementById('diagram').innerHTML = '<p style="color:#f08080;padding:20px;">⚠ Diagram error: ' + err.message + '</p>';
-    });
+  mermaid.render('mermaid-svg', chart).then(({ svg }) => {
+    document.getElementById('diagram').innerHTML = svg;
+    const svgEl = document.getElementById('diagram').querySelector('svg');
+    if (svgEl) { addHalos(svgEl); makeCloud(svgEl); setupClusterClicks(svgEl); addRiskBadges(svgEl); }
+  }).catch(err => {
+    document.getElementById('diagram').innerHTML = '<p style="color:#f08080;padding:20px;">⚠ Diagram error: ' + err.message + '</p>';
   });
 
   function addHalos(svg) {
