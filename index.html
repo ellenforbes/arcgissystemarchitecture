@@ -374,15 +374,21 @@ flowchart TB
   mermaid.initialize({
     startOnLoad: false,
     theme: 'default',
-    flowchart: { padding: 24, subGraphTitleMargin: { top: 28, bottom: 18 }, htmlLabels: true }
+    useMaxWidth: false,
+    flowchart: { padding: 24, subGraphTitleMargin: { top: 28, bottom: 18 }, htmlLabels: true, useMaxWidth: false }
   });
 
-  mermaid.render('mermaid-svg', chart).then(({ svg }) => {
-    document.getElementById('diagram').innerHTML = svg;
-    const svgEl = document.getElementById('diagram').querySelector('svg');
-    if (svgEl) { addHalos(svgEl); makeCloud(svgEl); setupClusterClicks(svgEl); addRiskBadges(svgEl); }
-  }).catch(err => {
-    document.getElementById('diagram').innerHTML = '<p style="color:#f08080;padding:20px;">⚠ Diagram error: ' + err.message + '</p>';
+  // Defer render until fonts are loaded — fixes truncated labels on GitHub Pages
+  // where Google Fonts load asynchronously and Mermaid would otherwise size
+  // nodes using the fallback font, causing text to overflow and be clipped.
+  document.fonts.ready.then(() => {
+    mermaid.render('mermaid-svg', chart).then(({ svg }) => {
+      document.getElementById('diagram').innerHTML = svg;
+      const svgEl = document.getElementById('diagram').querySelector('svg');
+      if (svgEl) { addHalos(svgEl); makeCloud(svgEl); setupClusterClicks(svgEl); addRiskBadges(svgEl); }
+    }).catch(err => {
+      document.getElementById('diagram').innerHTML = '<p style="color:#f08080;padding:20px;">⚠ Diagram error: ' + err.message + '</p>';
+    });
   });
 
   function addHalos(svg) {
