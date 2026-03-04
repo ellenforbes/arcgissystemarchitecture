@@ -318,13 +318,8 @@
 %%{init: { 'flowchart': { 'rankSpacing': 160, 'nodeSpacing': 50 } } }%%
 flowchart TB
     subgraph Cloud["☁️ ESRI ArcGIS Online Cloud"]
-        DB[("📦 Hosted Database<br/>Maps, Feature Layers, Images, Excel Docs")]
+        DB[("📦 Hosted Database<br/>Maps, Feature Layers, Images, Excel Docs<br/>WGS84")]
         WebUI["🌐 Web Interface"]
-    end
-
-    subgraph VM["🖥️ VM: PEM-AVD-1 (Backup Server)"]
-        PyScript["💻 Python Backup Script<br/>(Runs daily)"]
-        GeoDB[("📁 .filegeodatabase<br/>Backup")]
     end
 
     subgraph Viewers["👀 Viewers — Read-only Access"]
@@ -353,24 +348,31 @@ flowchart TB
         Ellen["🏢 Ellen Forbes"]
     end
 
-    Note1["📝 Images & govt data<br/>not backed up"]
-
-    subgraph SharePoint["📂 SharePoint: Pembroke GIS Files"]
-        SP_DXF["📐 DXFs"]
-        SP_SHP["🗺️ Shapefiles"]
+    subgraph VMGroup["&nbsp;"]
+        subgraph VM["🖥️ VM: PEM-AVD-1 (Backup Server)"]
+            PyScript["💻 Python Backup Script<br/>(Runs daily)"]
+            GeoDB[("📁 .filegeodatabase<br/>Backup<br/>WGS84")]
+        end
+        subgraph SharePoint["📂 SharePoint: Pembroke GIS Files"]
+            SP_DXF["📐 DXFs<br/>GDA94 MGA 55"]
+            SP_SHP["🗺️ Shapefiles<br/>WGS84"]
+        end
     end
+
+    Note1["📝 Images & govt data<br/>not backed up"]
 
     WebUI --> DB
     PyScript -- "Backup (Feature Layers)" --> GeoDB
     PyScript <-- "API Connection" --> DB
-    PyScript -- "Python script" --> SP_DXF
-    PyScript -- "Python script" --> SP_SHP
-    Note1 -.- DB
+    GeoDB -- "Python script" --> SP_DXF
+    GeoDB -- "Python script" --> SP_SHP
+    DB -.- Note1
     Viewers -- "🌐 Browser / Survey123" --> WebUI
     MobileWorkers -- "📱 Field Maps / Survey123" --> WebUI
     Creators -- "🖥️ Desktop / Field Maps / Browser / Survey123" --> WebUI
 
     style Cloud fill:#dbeeff,stroke:#4a90d9,stroke-width:2px,stroke-dasharray:8 4
+    style VMGroup fill:none,stroke:none
     style VM fill:#fff8e1,stroke:#f0a500,stroke-width:2px
     style Viewers fill:#e8f5e9,stroke:#43a047,stroke-width:2px
     style MobileWorkers fill:#fce4ec,stroke:#e91e63,stroke-width:2px
@@ -391,10 +393,61 @@ flowchart TB
   mermaid.render('mermaid-svg', chart).then(({ svg }) => {
     document.getElementById('diagram').innerHTML = svg;
     const svgEl = document.getElementById('diagram').querySelector('svg');
-    if (svgEl) { addHalos(svgEl); makeCloud(svgEl); setupClusterClicks(svgEl); addRiskBadges(svgEl); }
+    if (svgEl) { addHalos(svgEl); makeCloud(svgEl); setupClusterClicks(svgEl); addRiskBadges(svgEl); makeFolders(svgEl); }
   }).catch(err => {
     document.getElementById('diagram').innerHTML = '<p style="color:#f08080;padding:20px;">⚠ Diagram error: ' + err.message + '</p>';
   });
+
+  // ── FOLDER SHAPES ────────────────────────────────────────────────
+  // Replaces the rect on DXF and Shapefile nodes with a folder-tab path.
+  // Uses broad selector since Mermaid v11 node class names vary.
+  function makeFolders(svg) {
+    const folderTargets = ['DXFs', 'Shapefiles'];
+    // Try all g elements with a rect child
+    // Only match direct node groups — avoid cluster/subgraph parents that also
+    // contain the same text and would create a folder-in-folder effect.
+    svg.querySelectorAll('g.node').forEach(g => {
+      const labelEl = g.querySelector('.nodeLabel, .label, foreignObject');
+      if (!labelEl) return;
+      const text = labelEl.textContent || '';
+      if (!folderTargets.some(t => text.includes(t))) return;
+      // Use the first direct child rect only
+      const rect = Array.from(g.children).find(el => el.tagName === 'rect');
+      if (!rect) return;
+
+      const x = parseFloat(rect.getAttribute('x') || 0);
+      const y = parseFloat(rect.getAttribute('y') || 0);
+      const w = parseFloat(rect.getAttribute('width') || 120);
+      const h = parseFloat(rect.getAttribute('height') || 60);
+      const fill   = rect.getAttribute('fill')         || '#ffffff';
+      const stroke = rect.getAttribute('stroke')       || '#e65100';
+      const sw     = rect.getAttribute('stroke-width') || '1.5';
+
+      // Folder: main rectangle body with a tab on top-left
+      const tabW = Math.min(w * 0.38, 50), tabH = 12, r = 4;
+      const d = [
+        `M ${x + r},${y}`,
+        `H ${x + tabW}`,
+        `L ${x + tabW + tabH},${y - tabH}`,
+        `H ${x + w - r}`,
+        `Q ${x + w},${y - tabH} ${x + w},${y - tabH + r}`,
+        `V ${y + h - r}`,
+        `Q ${x + w},${y + h} ${x + w - r},${y + h}`,
+        `H ${x + r}`,
+        `Q ${x},${y + h} ${x},${y + h - r}`,
+        `V ${y + r}`,
+        `Q ${x},${y} ${x + r},${y}`,
+        `Z`
+      ].join(' ');
+
+      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      path.setAttribute('d', d);
+      path.setAttribute('fill', fill);
+      path.setAttribute('stroke', stroke);
+      path.setAttribute('stroke-width', sw);
+      rect.replaceWith(path);
+    });
+  }
 
   function addHalos(svg) {
     svg.querySelectorAll('.cluster-label text').forEach(t => {
