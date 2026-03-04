@@ -168,6 +168,9 @@
     .info-modal-body .note-warn.yellow {
       background: rgba(240,165,0,.1); border-left-color: var(--orange); color: #ffd166;
     }
+    .info-modal-body .note-warn.blue {
+      background: rgba(0, 123, 255, 0.1); border-left-color: var(--blue); color: #66b3ff;
+    }
 
     .lic-tooltip {
       position: fixed; background: #1a1a45; border: 1px solid rgba(255,255,255,.15);
@@ -341,8 +344,8 @@ flowchart TB
         Cian["🏗️ Cian Morgan"]
         JWood["🏗️ Jake Wood"]
         KNicholas["🏗️ Kerryn Nicholas"]
-        JHudson["🏢 Jake Hudson"]
-        Ellen["🏢 Ellen Forbes"]
+        JHudson["🏢 Jake Hudson (A)"]
+        Ellen["🏢 Ellen Forbes (A)"]
     end
 
     Note1["📝 Images & govt data<br/>not backed up"]
@@ -353,7 +356,7 @@ flowchart TB
     Note1 -.- DB
     Viewers -- "🌐 Browser (R) / Survey123" --> WebUI
     MobileWorkers -- "📱 Field Maps<br/>🌐 Browser (R) / Survey123" --> WebUI
-    Creators -- "🖥️ Desktop / Field Maps<br/>🌐 Browser (E) / Survey123" --> WebUI
+    Creators -- "🖥️ Desktop / Field Maps<br/>🌐 Browser (W) / Survey123" --> WebUI
 
     style Cloud fill:#dbeeff,stroke:#4a90d9,stroke-width:2px,stroke-dasharray:8 4
     style VM fill:#fff8e1,stroke:#f0a500,stroke-width:2px
@@ -473,6 +476,21 @@ flowchart TB
       title: '! Inefficiency — Unassigned Licence', cat: '🟡 Inefficiency', catColor: '#f0a500',
       html: `<div class="note-warn yellow">This licence is currently unassigned and represents wasted expenditure.<br/><br/>At $217/year, this seat should either be allocated to a user with a genuine need or removed from the subscription to reduce costs.</div>`
     }
+    'PyScript': {
+      type: 'warn',
+      title: '! Previous Failures', cat: '🟡 Inefficiency', catColor: '#f0a500',
+      html: `<div class="note-warn yellow">This back up system is probably the best we can do with the infrastructure we have, it runs daily 90% of the time. Would look to eventually improve but low priority issue.</div>`
+    }
+    'JHudson': {
+      type: 'warn',
+      title: 'Administrator', cat: '🔵 Information', catColor: '#f0a500',
+      html: `<div class="note-warn blue">Administrator access, can add and delete other users, full access to delete and edit all layers on the system (other creator users can only completely edit and delete their own layers).</div>`
+    }
+    'Ellen': {
+      type: 'warn',
+      title: '! Previous Failures', cat: '🔵 Information', catColor: '#f0a500',
+      html: `<div class="note-warn blue">Administrator access, can add and delete other users, full access to delete and edit all layers on the system (other creator users can only completely edit and delete their own layers).</div>`
+    }
   };
 
   // ── INJECT RISK/WARN BADGES ───────────────────────────────────────
@@ -482,7 +500,10 @@ flowchart TB
       { match: 'External',                  key: 'External'    },
       { match: 'Environmental Consultant',  key: 'EnvConsult'  },
       { match: 'Consultant',               key: 'ConsultantMW' },
-      { match: 'Unassigned',               key: 'Unassigned'  }
+      { match: 'Unassigned',               key: 'Unassigned'  },
+      { match: 'PyScript',               key: 'PyScript'  },
+      { match: 'JHudson',               key: 'JHudson'  },
+      { match: 'Ellen',               key: 'Ellen'  }
     ];
 
     const svgNS  = 'http://www.w3.org/2000/svg';
@@ -545,7 +566,7 @@ flowchart TB
     },
     'Creators': {
       cat: '🧭 Creator Licence', catColor: '#673ab7', title: 'Creators — Full GIS Access',
-      html: `<p>The Creator licence provides full access to the GIS platform. Creators can:</p><ul><li>Create and configure new feature layers</li><li>Build and publish Survey123 surveys</li><li>Design and share new web maps</li><li>Export polished PDF maps</li><li>Perform advanced spatial analysis in <strong>ArcGIS Pro</strong> (desktop)</li><li>Access via browser, FieldMaps, Survey123, and ArcGIS Pro</li></ul>`
+      html: `<p>The Creator licence provides full access to the GIS platform. Creators can:</p><ul><li>Create and configure new feature layers on AGOL</li><li>Build and publish Survey123 surveys</li><li>Design and share new web maps on AGOL</li><li>Export polished PDF maps</li><li>Perform advanced spatial analysis in <strong>ArcGIS Pro</strong> (desktop)</li><li>Access via browser, FieldMaps, Survey123, and ArcGIS Pro</li></ul>`
     }
   };
 
@@ -653,6 +674,7 @@ flowchart TB
 </body>
 
 </html>
+
 
 
 
