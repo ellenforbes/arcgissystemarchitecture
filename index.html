@@ -449,37 +449,52 @@ flowchart TB
   }
 
   // ── FIX CLUSTER LABEL WIDTHS ─────────────────────────────────────
-  // Mermaid renders subgraph labels into a foreignObject with a hardcoded
-  // narrow width, causing text to clip on Chrome and Edge. This widens
-  // the foreignObject symmetrically (keeping it centered) to match the
-  // cluster rect width, without touching its y or group position.
+  // The foreignObject and cluster rect live in different transform spaces,
+  // so we convert everything to screen pixels via getScreenCTM() first.
   function fixClusterLabels(svg) {
     svg.querySelectorAll('g.cluster').forEach(cluster => {
       const clusterRect = cluster.querySelector(':scope > rect');
       const fo = cluster.querySelector('.cluster-label foreignObject');
       if (!clusterRect || !fo) return;
 
-      const targetWidth = parseFloat(clusterRect.getAttribute('width') || 200);
-      const currentWidth = parseFloat(fo.getAttribute('width') || 100);
+      try {
+        // --- Get cluster rect bounds in screen pixels ---
+        const rCTM  = clusterRect.getScreenCTM();
+        const rBox  = clusterRect.getBBox();
+        const rectLeftPx   = rCTM.e + rBox.x  * rCTM.a;
+        const rectWidthPx  = rBox.width  * rCTM.a;
+        const rectCenterPx = rectLeftPx + rectWidthPx / 2;
 
-      if (targetWidth <= currentWidth) return; // already wide enough
+        // --- Get foreignObject bounds in screen pixels ---
+        const fCTM       = fo.getScreenCTM();
+        const foX        = parseFloat(fo.getAttribute('x')     || 0);
+        const foW        = parseFloat(fo.getAttribute('width')  || 100);
+        const foLeftPx   = fCTM.e + foX * fCTM.a;
+        const foWidthPx  = foW * fCTM.a;
 
-      // Widen symmetrically: shift x left by half the extra width
-      const extra = targetWidth - currentWidth;
-      const currentX = parseFloat(fo.getAttribute('x') || 0);
-      fo.setAttribute('width', targetWidth);
-      fo.setAttribute('x', currentX - extra / 2);
+        if (rectWidthPx <= foWidthPx) return; // already wide enough
 
-      // Enable wrapping inside the foreignObject
-      fo.querySelectorAll('div, span, p').forEach(el => {
-        el.style.whiteSpace   = 'normal';
-        el.style.wordBreak    = 'break-word';
-        el.style.width        = '100%';
-        el.style.textAlign    = 'center';
-        el.style.boxSizing    = 'border-box';
-        el.style.paddingLeft  = '8px';
-        el.style.paddingRight = '8px';
-      });
+        // --- Compute new x so the fo is centred over the cluster rect ---
+        const newWidthLocal = rectWidthPx / fCTM.a;           // in fo's local units
+        const newLeftPx     = rectCenterPx - rectWidthPx / 2; // same left as rect
+        const newXLocal     = (newLeftPx - fCTM.e) / fCTM.a;
+
+        fo.setAttribute('width', newWidthLocal);
+        fo.setAttribute('x', newXLocal);
+
+        // Enable text wrapping inside
+        fo.querySelectorAll('div, span, p').forEach(el => {
+          el.style.whiteSpace   = 'normal';
+          el.style.wordBreak    = 'break-word';
+          el.style.width        = '100%';
+          el.style.textAlign    = 'center';
+          el.style.boxSizing    = 'border-box';
+          el.style.paddingLeft  = '8px';
+          el.style.paddingRight = '8px';
+        });
+      } catch(e) {
+        console.warn('fixClusterLabels:', e);
+      }
     });
   }
 
