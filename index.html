@@ -331,7 +331,7 @@ flowchart TB
     subgraph Viewers["👀 Viewers — Read-only<br/>Browser and Survey123"]
         ViewerLic["🎫 4 Licences · $217 / year each"]
         Onsite["🏗️ On-site (~16 users)"]
-        Brisbane["🏢 Brisbane Office<br/>(~22 users)"]
+        Brisbane["🏢 Brisbane Office (~22 users)"]
         External["🌍 External (? users)"]
         Unassigned["Unassigned"]
     end
@@ -341,7 +341,7 @@ flowchart TB
         DonCherie["🏗️ Don & Cherie"]
         SiteMW["🏗️ Site (shared ×5)"]
         SteveGiacomo["🏗️ Steve & Giacomo"]
-        EnvConsult["🌍 Environmental<br/>Consultant (? users)"]
+        EnvConsult["🌍 Environmental Consultant (? users)"]
         ConsultantMW["🌍 Consultant (? users)"]
     end
 
@@ -451,27 +451,32 @@ flowchart TB
   // ── FIX CLUSTER LABEL WIDTHS ─────────────────────────────────────
   // Mermaid renders subgraph labels into a foreignObject with a hardcoded
   // narrow width, causing text to clip on Chrome and Edge. This widens
-  // each label's foreignObject to match the actual cluster rectangle.
+  // the foreignObject symmetrically (keeping it centered) to match the
+  // cluster rect width, without touching its y or group position.
   function fixClusterLabels(svg) {
     svg.querySelectorAll('g.cluster').forEach(cluster => {
       const clusterRect = cluster.querySelector(':scope > rect');
       const fo = cluster.querySelector('.cluster-label foreignObject');
       if (!clusterRect || !fo) return;
 
-      const rw = parseFloat(clusterRect.getAttribute('width') || 200);
-      const rx = parseFloat(clusterRect.getAttribute('x') || 0);
+      const targetWidth = parseFloat(clusterRect.getAttribute('width') || 200);
+      const currentWidth = parseFloat(fo.getAttribute('width') || 100);
 
-      // Make foreignObject span the full cluster width
-      fo.setAttribute('width', rw);
-      fo.setAttribute('x', rx);
+      if (targetWidth <= currentWidth) return; // already wide enough
 
-      // Ensure all inner elements wrap
+      // Widen symmetrically: shift x left by half the extra width
+      const extra = targetWidth - currentWidth;
+      const currentX = parseFloat(fo.getAttribute('x') || 0);
+      fo.setAttribute('width', targetWidth);
+      fo.setAttribute('x', currentX - extra / 2);
+
+      // Enable wrapping inside the foreignObject
       fo.querySelectorAll('div, span, p').forEach(el => {
-        el.style.whiteSpace = 'normal';
-        el.style.wordBreak  = 'break-word';
-        el.style.width      = '100%';
-        el.style.textAlign  = 'center';
-        el.style.boxSizing  = 'border-box';
+        el.style.whiteSpace   = 'normal';
+        el.style.wordBreak    = 'break-word';
+        el.style.width        = '100%';
+        el.style.textAlign    = 'center';
+        el.style.boxSizing    = 'border-box';
         el.style.paddingLeft  = '8px';
         el.style.paddingRight = '8px';
       });
