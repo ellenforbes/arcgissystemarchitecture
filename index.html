@@ -452,49 +452,41 @@ flowchart TB
   // The foreignObject and cluster rect live in different transform spaces,
   // so we convert everything to screen pixels via getScreenCTM() first.
   function fixClusterLabels(svg) {
-    svg.querySelectorAll('g.cluster').forEach(cluster => {
-      const clusterRect = cluster.querySelector(':scope > rect');
-      const fo = cluster.querySelector('.cluster-label foreignObject');
-      if (!clusterRect || !fo) return;
+    requestAnimationFrame(() => {
+      svg.querySelectorAll('g.cluster').forEach(cluster => {
+        const clusterRect = cluster.querySelector(':scope > rect');
+        const fo = cluster.querySelector('.cluster-label foreignObject');
+        if (!clusterRect || !fo) return;
 
-      try {
-        // --- Get cluster rect bounds in screen pixels ---
-        const rCTM  = clusterRect.getScreenCTM();
-        const rBox  = clusterRect.getBBox();
-        const rectLeftPx   = rCTM.e + rBox.x  * rCTM.a;
-        const rectWidthPx  = rBox.width  * rCTM.a;
-        const rectCenterPx = rectLeftPx + rectWidthPx / 2;
+        try {
+          const rCTM  = clusterRect.getScreenCTM();
+          const rBox  = clusterRect.getBBox();
+          const rectLeftPx   = rCTM.e + rBox.x  * rCTM.a;
+          const rectWidthPx  = rBox.width  * rCTM.a;
 
-        // --- Get foreignObject bounds in screen pixels ---
-        const fCTM       = fo.getScreenCTM();
-        const foX        = parseFloat(fo.getAttribute('x')     || 0);
-        const foW        = parseFloat(fo.getAttribute('width')  || 100);
-        const foLeftPx   = fCTM.e + foX * fCTM.a;
-        const foWidthPx  = foW * fCTM.a;
+          const fCTM  = fo.getScreenCTM();
+          const foX   = parseFloat(fo.getAttribute('x')    || 0);
+          const foW   = parseFloat(fo.getAttribute('width') || 100);
 
-        if (rectWidthPx <= foWidthPx) return; // already wide enough
+          // Always reposition — even if already wide, x may be off-centre
+          const newWidthLocal = rectWidthPx / fCTM.a;
+          const newXLocal     = (rectLeftPx - fCTM.e) / fCTM.a;
 
-        // --- Compute new x so the fo is centred over the cluster rect ---
-        const newWidthLocal = rectWidthPx / fCTM.a;           // in fo's local units
-        const newLeftPx     = rectCenterPx - rectWidthPx / 2; // same left as rect
-        const newXLocal     = (newLeftPx - fCTM.e) / fCTM.a;
+          fo.setAttribute('width', newWidthLocal);
+          fo.setAttribute('x',     newXLocal);
 
-        fo.setAttribute('width', newWidthLocal);
-        fo.setAttribute('x', newXLocal);
-
-        // Enable text wrapping inside
-        fo.querySelectorAll('div, span, p').forEach(el => {
-          el.style.whiteSpace   = 'normal';
-          el.style.wordBreak    = 'break-word';
-          el.style.width        = '100%';
-          el.style.textAlign    = 'center';
-          el.style.boxSizing    = 'border-box';
-          el.style.paddingLeft  = '8px';
-          el.style.paddingRight = '8px';
-        });
-      } catch(e) {
-        console.warn('fixClusterLabels:', e);
-      }
+          fo.querySelectorAll('div, span, p').forEach(el => {
+            el.style.whiteSpace   = 'normal';
+            el.style.wordBreak    = 'break-word';
+            el.style.width        = '100%';
+            el.style.textAlign    = 'center';
+            el.style.display      = 'block';
+            el.style.boxSizing    = 'border-box';
+          });
+        } catch(e) {
+          console.warn('fixClusterLabels:', e);
+        }
+      });
     });
   }
 
@@ -793,4 +785,3 @@ flowchart TB
 </script>
 </body>
 </html>
-
