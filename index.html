@@ -180,8 +180,6 @@
     }
     .lic-tooltip.visible { opacity: 1; }
 
-    .layers-img { display: block; max-width: 100%; width: 100%; height: auto; border-radius: 6px; }
-
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: rgba(255,255,255,.15); border-radius: 3px; }
@@ -295,11 +293,6 @@
     </div>
   </div>
 
-  <div class="panel">
-    <div class="panel-title"><span>Layers</span> vs <span>Maps</span> Explainer</div>
-    <img class="layers-img" src="LayersvsMapExplainer.png" alt="Layers vs Maps Explainer">
-  </div>
-
   <div class="info-modal-overlay" id="infoModal" onclick="closeModal(event)">
     <div class="info-modal" id="infoModalInner">
       <button class="info-modal-close" onclick="closeInfoModal()">✕</button>
@@ -399,19 +392,13 @@ flowchart TB
   });
 
   // ── FOLDER SHAPES ────────────────────────────────────────────────
-  // Replaces the rect on DXF and Shapefile nodes with a folder-tab path.
-  // Uses broad selector since Mermaid v11 node class names vary.
   function makeFolders(svg) {
     const folderTargets = ['DXFs', 'Shapefiles'];
-    // Try all g elements with a rect child
-    // Only match direct node groups — avoid cluster/subgraph parents that also
-    // contain the same text and would create a folder-in-folder effect.
     svg.querySelectorAll('g.node').forEach(g => {
       const labelEl = g.querySelector('.nodeLabel, .label, foreignObject');
       if (!labelEl) return;
       const text = labelEl.textContent || '';
       if (!folderTargets.some(t => text.includes(t))) return;
-      // Use the first direct child rect only
       const rect = Array.from(g.children).find(el => el.tagName === 'rect');
       if (!rect) return;
 
@@ -423,7 +410,6 @@ flowchart TB
       const stroke = rect.getAttribute('stroke')       || '#e65100';
       const sw     = rect.getAttribute('stroke-width') || '1.5';
 
-      // Folder: main rectangle body with a tab on top-left
       const tabW = Math.min(w * 0.38, 50), tabH = 12, r = 4;
       const d = [
         `M ${x + r},${y}`,
@@ -496,7 +482,6 @@ flowchart TB
   }
 
   // ── RISK / WARNING DATA ───────────────────────────────────────────
-  // type: 'risk' = red circle, 'warn' = yellow circle
   const riskInfo = {
     'KNicholas': {
       type: 'risk',
@@ -619,6 +604,9 @@ flowchart TB
     }
   };
 
+  // ── FIX: Corrected brace structure — the original had a missing closing }
+  //         for the outer if (!key) block, causing a JS syntax error that
+  //         prevented the entire script (including Mermaid) from running.
   function setupClusterClicks(svg) {
     svg.querySelectorAll('g.cluster').forEach(c => {
       const label = c.querySelector('.cluster-label')?.textContent || '';
@@ -627,8 +615,8 @@ flowchart TB
       else if (label.includes('Mobile')) key = 'MobileWorkers';
       else if (label.includes('Creators') || label.includes('Creator')) key = 'Creators';
 
-      // SharePoint subgraph — open URL instead of modal
       if (!key) {
+        // SharePoint subgraph — open URL instead of modal
         if (label.includes('SharePoint')) {
           c.style.cursor = 'pointer';
           c.setAttribute('tabindex', '0');
@@ -641,10 +629,12 @@ flowchart TB
             c.addEventListener('mouseleave', () => { bg.style.filter = ''; });
           }
         }
-        return;
-        
-      if (!key) return;
-      c.classList.add('cluster-clickable'); c.setAttribute('tabindex', '0'); c.style.cursor = 'pointer';
+        return; // Skip non-modal, non-SharePoint clusters
+      } // ← This closing brace was missing in the original, breaking the whole script
+
+      c.classList.add('cluster-clickable');
+      c.setAttribute('tabindex', '0');
+      c.style.cursor = 'pointer';
       const bg = c.querySelector('rect, path');
       if (bg) {
         c.addEventListener('mouseenter', () => { bg.style.filter = 'brightness(0.85) saturate(1.4)'; });
@@ -692,7 +682,6 @@ flowchart TB
   function closeModal(e) { if (e.target === document.getElementById('infoModal')) closeInfoModal(); }
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closeInfoModal(); });
 
-  // Script runs at end of body — DOM is already ready, no DOMContentLoaded needed
   const tooltip = document.getElementById('licTooltip');
   document.querySelectorAll('.licence-tag').forEach(tag => {
     tag.addEventListener('mouseenter', e => { tooltip.classList.add('visible'); positionTooltip(e); });
@@ -740,6 +729,4 @@ flowchart TB
   }
 </script>
 </body>
-
 </html>
-
